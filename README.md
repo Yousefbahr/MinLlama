@@ -1,4 +1,5 @@
 # Model's outputs/accuracies
+The reference outputs are in [instructions.md](https://github.com/Yousefbahr/MinLlama/blob/master/instructions.md)
 
 ## Text Continuation
 Prompt:
