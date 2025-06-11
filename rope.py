@@ -64,12 +64,41 @@ def apply_rotary_emb(
     # First, compute the trigonometric values in the second and fourth columns in
     # slide 22 (linked above).
 
+    freqs = 1.0 / theta ** (2 * torch.arange(0, head_dim // 2, device=device).float() / head_dim)
+
+    positions = torch.arange(max_seq_len, device=device).unsqueeze(1)
+
+    angles = positions * freqs
+
+    cos = torch.cos(angles)[:seqlen, :]
+    sin = torch.sin(angles)[:seqlen, :]
+
+    cos = cos.view(seqlen, 1, 1, head_dim // 2)
+    sin = sin.view(seqlen, 1, 1, head_dim // 2)
+
     # Then, combine these trigonometric values with the tensors query_real, query_imag,
     # key_real, and key_imag.
 
-    raise NotImplementedError
+    query_real = query_real.permute(1, 0, 2, 3)
+    query_imag = query_imag.permute(1, 0, 2, 3)
+    key_real = key_real.permute(1, 0, 2, 3)
+    key_imag = key_imag.permute(1, 0, 2, 3)
 
-    query_out = None
-    key_out = None
+    q_rotated_even = query_imag * cos - query_real * sin
+    q_rotated_odd = query_imag * sin + query_real * cos
+
+    k_rotated_even = key_imag * cos - key_real * sin
+    k_rotated_odd = key_imag * sin + key_real * cos
+
+    # raise NotImplementedError
+
+    q_rotated_even = q_rotated_even.permute(1, 0, 2, 3)
+    q_rotated_odd = q_rotated_odd.permute(1, 0, 2, 3)
+    k_rotated_even = k_rotated_even.permute(1, 0, 2, 3)
+    k_rotated_odd = k_rotated_odd.permute(1, 0, 2, 3)
+
+    query_out = torch.stack((q_rotated_even, q_rotated_odd), dim=-1).flatten(-2)
+    key_out = torch.stack((k_rotated_even, k_rotated_odd), dim=-1).flatten(-2)
+
     # Return the rotary position embeddings for the query and key tensors
     return query_out, key_out
